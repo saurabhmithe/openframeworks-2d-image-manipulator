@@ -17,4 +17,5 @@ public:
     int width;
     int height;
     bool isSelected;
+    float rotation = 0;
 };

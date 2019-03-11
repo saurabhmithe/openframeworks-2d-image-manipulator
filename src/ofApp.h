@@ -34,6 +34,7 @@ public:
     float angle = 30; // angle to rotate by
     glm :: vec3 dropLocation;
     glm :: vec3 imagePosition;
+    glm :: vec3 mousePos;
     std::vector<customImage> listOfImages;
     customImage cImage;
     customImage* selectedImage;
@@ -44,4 +45,9 @@ public:
         saveImage.grabScreen(0, 0, 1024, 768);
         saveImage.save("myPic.jpg");
     }
+    bool rotateMode = false;
+    bool scaleMode = false;
+    
+    float deltaX;
+    float deltaY;
 };

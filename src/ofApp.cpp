@@ -21,9 +21,27 @@ void ofApp::draw(){
         for (int i = 0; i < listOfImages.size(); i++) {
             ofPushMatrix();
             ofTranslate(listOfImages[i].imagePosition); // draw where dragged
+            
+//            if(rotateMode) {
+//                // rotate image
+//                deltaX = mousePos.x - lastMouse.x;
+//                deltaY = mousePos.y = lastMouse.y;
+//                double movementAngle;
+//                movementAngle = -(atan2(deltaX, deltaY) * 180.0 / PI);
+//                if (movementAngle < 0) {
+//                    movementAngle += 360;
+//                }
+//                listOfImages[currentSelectedImageIndex].rotation = movementAngle;
+//            }
+            ofTranslate(listOfImages[i].width/2, listOfImages[i].height/2, 0);
+            ofRotateDeg(listOfImages[i].rotation, 0, 0, 1);
+            ofTranslate(-listOfImages[i].width/2, -listOfImages[i].height/2, 0);
             listOfImages[i].image.draw(glm::vec3(0, 0, 0));
             if (listOfImages[i].isSelected) currentSelectedImageIndex = i;
             ofPopMatrix();
+//            } else {
+//                listOfImages[i].image.draw(glm::vec3(0, 0, 0));
+//            }
         }
         
         // Draw a border around the selected image
@@ -51,6 +69,14 @@ void ofApp::keyPressed(int key){
     
     if (key == 'F' || key == 'f') {
         ofToggleFullscreen();
+    }
+    
+    if (key == 'R' || key == 'r') {
+        rotateMode = true;
+    }
+    
+    if (key == 'Q' || key == 'q') {
+        rotateMode = false;
     }
     
     if( key == OF_KEY_BACKSPACE || key == OF_KEY_DEL ) {
@@ -96,10 +122,36 @@ void ofApp::mouseMoved(int x, int y ){
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-    glm :: vec3 mousePos(x, y , 0); // new mouse position
-    if (!bDrag) return;
-    glm :: vec3 delta = mousePos - lastMouse;
-    listOfImages[currentSelectedImageIndex].imagePosition += delta;
+    mousePos = glm :: vec3(x, y , 0); // new mouse position
+    //if (!bDrag) return;
+    customImage img = listOfImages[currentSelectedImageIndex];
+    float centX = img.imagePosition.x + img.width / 2;
+    float centY = img.imagePosition.y + img.height / 2;
+    
+    float refX = (img.imagePosition.x + img.width);
+    float refY =  (img.imagePosition.y + img.height);
+    
+    glm::vec3 nPos = glm::normalize(glm::vec3(x, y, 0) - glm::vec3(centX, centY, 0));
+    glm::vec3 nNewPos = glm::normalize(glm::vec3(refX, refY, 0) - glm::vec3(centX, centY, 0));
+    
+    
+    if(rotateMode) {
+        // rotate image
+        deltaX = x - lastMouse.x;
+        deltaY = y = lastMouse.y;
+        
+        listOfImages[currentSelectedImageIndex].rotation = (atan2(deltaX, deltaY) * 180.0 / PI) * 10;
+        if (listOfImages[currentSelectedImageIndex].rotation < 0) {
+            listOfImages[currentSelectedImageIndex].rotation -= 360;
+        }
+    } else
+        if (scaleMode) {
+        // scale image
+    } else {
+        // translate image
+        glm :: vec3 delta = mousePos - lastMouse;
+        listOfImages[currentSelectedImageIndex].imagePosition += delta;
+    }
     lastMouse = mousePos;
 }
 
@@ -166,3 +218,5 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
         listOfImages.push_back(myImage);
     }
 }
+
+
