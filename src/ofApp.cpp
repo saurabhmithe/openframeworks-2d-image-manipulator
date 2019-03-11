@@ -21,23 +21,27 @@ void ofApp::draw(){
         for (int i = 0; i < listOfImages.size(); i++) {
             ofPushMatrix();
             ofTranslate(listOfImages[i].imagePosition); // draw where dragged
+            ofRotateDeg(listOfImages[i].angle, 0, 0, 1);
+//            ofTranslate(listOfImages[i].width/2, listOfImages[i].height/2, 0);
+//            ofRotateDeg(listOfImages[i].rotation, 0, 0, 1);
+//            ofTranslate(-listOfImages[i].width/2, -listOfImages[i].height/2, 0);
             
-//            if(rotateMode) {
-//                // rotate image
-//                deltaX = mousePos.x - lastMouse.x;
-//                deltaY = mousePos.y = lastMouse.y;
-//                double movementAngle;
-//                movementAngle = -(atan2(deltaX, deltaY) * 180.0 / PI);
-//                if (movementAngle < 0) {
-//                    movementAngle += 360;
-//                }
-//                listOfImages[currentSelectedImageIndex].rotation = movementAngle;
-//            }
-            ofTranslate(listOfImages[i].width/2, listOfImages[i].height/2, 0);
-            ofRotateDeg(listOfImages[i].rotation, 0, 0, 1);
-            ofTranslate(-listOfImages[i].width/2, -listOfImages[i].height/2, 0);
             listOfImages[i].image.draw(glm::vec3(0, 0, 0));
             if (listOfImages[i].isSelected) currentSelectedImageIndex = i;
+            if(isAnySelected) {
+                if(currentSelectedImageIndex == i) {
+                    customImage selectedImage = listOfImages[currentSelectedImageIndex];
+                    ofPath path;
+                    int borderWidth = 5; // selected image border width
+                    path.setColor(ofColor::black);
+                    path.setFilled(false);
+                    path.setStrokeWidth(5);
+                    path.rectangle(0, 0, selectedImage.width, selectedImage.height);
+                   // path.rectangle(selectedImage.imagePosition.x + borderWidth, selectedImage.imagePosition.y + borderWidth, selectedImage.width - 2*borderWidth, selectedImage.height - 2*borderWidth);
+                    path.draw();
+                }
+            }
+            
             ofPopMatrix();
 //            } else {
 //                listOfImages[i].image.draw(glm::vec3(0, 0, 0));
@@ -46,15 +50,7 @@ void ofApp::draw(){
         
         // Draw a border around the selected image
         // Do not draw any border if none selected
-        if(isAnySelected) {
-            customImage selectedImage = listOfImages[currentSelectedImageIndex];
-            ofPath path;
-            int borderWidth = 5; // selected image border width
-            path.setFillColor(ofColor::black);
-            path.rectangle(selectedImage.imagePosition.x, selectedImage.imagePosition.y, selectedImage.width, selectedImage.height);
-            path.rectangle(selectedImage.imagePosition.x + borderWidth, selectedImage.imagePosition.y + borderWidth, selectedImage.width - 2*borderWidth, selectedImage.height - 2*borderWidth);
-            path.draw();
-        }
+        
     }
 }
 
@@ -122,34 +118,29 @@ void ofApp::mouseMoved(int x, int y ){
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
+    
+    if (!bDrag) return;
+    
     mousePos = glm :: vec3(x, y , 0); // new mouse position
-    //if (!bDrag) return;
-    customImage img = listOfImages[currentSelectedImageIndex];
-    float centX = img.imagePosition.x + img.width / 2;
-    float centY = img.imagePosition.y + img.height / 2;
-    
-    float refX = (img.imagePosition.x + img.width);
-    float refY =  (img.imagePosition.y + img.height);
-    
-    glm::vec3 nPos = glm::normalize(glm::vec3(x, y, 0) - glm::vec3(centX, centY, 0));
-    glm::vec3 nNewPos = glm::normalize(glm::vec3(refX, refY, 0) - glm::vec3(centX, centY, 0));
-    
+    glm::vec3 delta = mousePos - lastMouse;
+//    customImage img = listOfImages[currentSelectedImageIndex];
+//    float centX = img.imagePosition.x + img.width / 2;
+//    float centY = img.imagePosition.y + img.height / 2;
+//
+//    float refX = (img.imagePosition.x + img.width);
+//    float refY =  (img.imagePosition.y + img.height);
+//
+//    glm::vec3 nPos = glm::normalize(glm::vec3(x, y, 0) - glm::vec3(centX, centY, 0));
+//    glm::vec3 nNewPos = glm::normalize(glm::vec3(refX, refY, 0) - glm::vec3(centX, centY, 0));
+//
     
     if(rotateMode) {
-        // rotate image
-        deltaX = x - lastMouse.x;
-        deltaY = y = lastMouse.y;
-        
-        listOfImages[currentSelectedImageIndex].rotation = (atan2(deltaX, deltaY) * 180.0 / PI) * 10;
-        if (listOfImages[currentSelectedImageIndex].rotation < 0) {
-            listOfImages[currentSelectedImageIndex].rotation -= 360;
-        }
+        listOfImages[currentSelectedImageIndex].angle += -delta.x;
     } else
         if (scaleMode) {
         // scale image
     } else {
         // translate image
-        glm :: vec3 delta = mousePos - lastMouse;
         listOfImages[currentSelectedImageIndex].imagePosition += delta;
     }
     lastMouse = mousePos;
@@ -163,7 +154,13 @@ void ofApp::mousePressed(int x, int y, int button){
     for (int i = 0; i < listOfImages.size(); i++) {
         listOfImages[i].isSelected = false;
         customImage myImage = listOfImages[i];
-        if (insideRectangle(pos, myImage.imagePosition, myImage.width, myImage.height)) {
+        
+        glm::mat4 m = glm::translate(glm::mat4(1.0), glm::vec3(listOfImages[i].imagePosition));
+        glm::mat4 M = glm::rotate(m, glm::radians(listOfImages[i].angle), glm::vec3(0, 0, 1));
+        
+        glm::vec3 p2 = glm::inverse(M) *  glm::vec4(pos, 1);
+        
+        if (insideRectangle(p2, glm::vec3(0, 0, 0), myImage.width, myImage.height)) {
             currentSelectedImageIndex = i;
             isAnySelected = true;
             bDrag = true;
@@ -217,6 +214,17 @@ void ofApp::dragEvent(ofDragInfo dragInfo){
         
         listOfImages.push_back(myImage);
     }
+}
+
+bool ofApp::insideImage(const glm::vec3 &p) {
+    
+    glm::mat4 m = glm::translate(glm::mat4(1.0), glm::vec3(imagePosition));
+    glm::mat4 M = glm::rotate(m, glm::radians(angle), glm::vec3(0, 0, 1));
+    
+    glm::vec3 p2 = glm::inverse(M) *  glm::vec4(p, 1);
+    if (insideRect(p2, glm::vec3(0,0,0), imageWidth, imageHeight)) return true;
+    else return false;
+    
 }
 
 

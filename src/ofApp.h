@@ -50,4 +50,8 @@ public:
     
     float deltaX;
     float deltaY;
+    bool insideRect(glm::vec3 p, glm::vec3 rp, float width, float height) {
+        return (p.x > rp.x && p.x < rp.x + width && p.y > rp.y && p.y < rp.y + height);
+    }
+    bool insideImage(const glm::vec3 &p);
 };
