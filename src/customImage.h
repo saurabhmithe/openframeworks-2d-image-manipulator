@@ -18,4 +18,7 @@ public:
     int height;
     bool isSelected;
     float angle = 0;
+    
+    float xScale = 1;
+    float yScale = 1;
 };

@@ -46,7 +46,8 @@ public:
         saveImage.save("myPic.jpg");
     }
     bool rotateMode = false;
-    bool scaleMode = false;
+    bool uniformScaleMode = false;
+    bool nonUniformScaleMode = false;
     
     float deltaX;
     float deltaY;
@@ -54,4 +55,5 @@ public:
         return (p.x > rp.x && p.x < rp.x + width && p.y > rp.y && p.y < rp.y + height);
     }
     bool insideImage(const glm::vec3 &p);
+    bool insideUniformScaleZone(const glm::vec3 &p);
 };
